@@ -22,6 +22,16 @@
 #include <memory>
 #include <aaudio/AAudio.h>
 #include "SoundRecording.h"
+#include "file/FileUtil.h"
+
+#if 1
+#ifndef MODULE_NAME
+#define MODULE_NAME  "AAUDIO-C"
+#endif
+
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, MODULE_NAME, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,MODULE_NAME, __VA_ARGS__)
+#endif
 
 class AudioEngine {
 
@@ -41,6 +51,9 @@ private:
     SoundRecording mSoundRecording;
     AAudioStream* mPlaybackStream = nullptr;
     AAudioStream* mRecordingStream = nullptr;
+    FileUtil file_util;
+    int32_t record_fd;
+    int32_t player_fd;
 
     void stopStream(AAudioStream *stream) const;
     void closeStream(AAudioStream **stream) const;

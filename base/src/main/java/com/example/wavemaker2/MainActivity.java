@@ -18,9 +18,10 @@ package com.example.wavemaker2;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.support.annotation.NonNull;
+
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
+
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -112,8 +113,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String permissions[],
-                                           @NonNull int[] grantResults) {
+                                          String permissions[],
+                                          int[] grantResults) {
         // Check that our permission was granted
         if (permissions.length > 0 &&
                 permissions[0].equals(Manifest.permission.RECORD_AUDIO) &&

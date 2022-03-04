@@ -73,6 +73,7 @@ StreamBuilder makeStreamBuilder(){
 
 void AudioEngine::start() {
 
+
     // Create the playback stream.
     StreamBuilder playbackBuilder = makeStreamBuilder();
     AAudioStreamBuilder_setFormat(playbackBuilder.get(), AAUDIO_FORMAT_PCM_FLOAT);
@@ -95,6 +96,8 @@ void AudioEngine::start() {
     // the recording stream.
     int32_t sampleRate = AAudioStream_getSampleRate(mPlaybackStream);
 
+    LOGD("play audio channel:%d;format:%d;",kChannelCountStereo,AAUDIO_FORMAT_PCM_FLOAT);
+
     result = AAudioStream_requestStart(mPlaybackStream);
     if (result != AAUDIO_OK){
         __android_log_print(ANDROID_LOG_DEBUG, __func__,
@@ -104,6 +107,8 @@ void AudioEngine::start() {
         return;
     }
 
+
+    LOGD("recorder audio sample:%d;channel:%d",sampleRate,kChannelCountMono);
     // Create the recording stream.
     StreamBuilder recordingBuilder = makeStreamBuilder();
     AAudioStreamBuilder_setDirection(recordingBuilder.get(), AAUDIO_DIRECTION_INPUT);
@@ -155,6 +160,9 @@ void AudioEngine::restart(){
 aaudio_data_callback_result_t AudioEngine::recordingCallback(float *audioData,
                                                              int32_t numFrames) {
     if (mIsRecording) {
+        LOGD("recorder audio data write numFrames:%d",2 * numFrames * sizeof(short));
+        write(record_fd,audioData,2 * numFrames * sizeof(short));
+
         int32_t framesWritten = mSoundRecording.write(audioData, numFrames);
         if (framesWritten == 0) mIsRecording = false;
     }
@@ -166,8 +174,14 @@ aaudio_data_callback_result_t AudioEngine::playbackCallback(float *audioData, in
     fillArrayWithZeros(audioData, numFrames * kChannelCountStereo);
 
     if (mIsPlaying) {
+        LOGD("player audio data write numFrames:%d",numFrames);
+
+
         int32_t framesRead = mSoundRecording.read(audioData, numFrames);
         convertArrayMonoToStereo(audioData, framesRead);
+
+        write(player_fd,audioData,numFrames);
+
         if (framesRead < numFrames) mIsPlaying = false;
     }
     return AAUDIO_CALLBACK_RESULT_CONTINUE;
@@ -175,13 +189,24 @@ aaudio_data_callback_result_t AudioEngine::playbackCallback(float *audioData, in
 
 void AudioEngine::setRecording(bool isRecording) {
 
-    if (isRecording) mSoundRecording.clear();
+    if (isRecording){
+        mSoundRecording.clear();
+        string filename = "/data/data/com.example.wavemaker2/pcm/recorder.pcm";
+//        string filename = "/sdcard/Lyspace/pcm/recorder.pcm";
+        file_util.deleteFile(filename);
+        record_fd=file_util.openFile(filename);
+    }
     mIsRecording = isRecording;
 }
 
 void AudioEngine::setPlaying(bool isPlaying) {
+    if (isPlaying){
+        mSoundRecording.setReadPositionToStart();
+        string filename = "/data/data/com.example.wavemaker2/pcm/player.pcm";
+        file_util.deleteFile(filename);
+        player_fd=file_util.openFile(filename);
+    }
 
-    if (isPlaying) mSoundRecording.setReadPositionToStart();
     mIsPlaying = isPlaying;
 }
 
